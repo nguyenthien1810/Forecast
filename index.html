@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forecast</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Tool Forecast result OU</h1>
+  <input id="history" placeholder="Nhập lịch sử, ví dụ: o u u o" />
+  <button onclick="analyze()">Phân tích</button>
+  <div id="result"></div>
+
+<div id="sequenceStats"></div>
+<label>
+  <input type="checkbox" id="toggleChart">
+  Hiện biểu đồ
+</label>
+<canvas id="chart" width="400" height="200" style="display: none;"></canvas>
+
+  <script src="./js/script.js"></script>
+  <script src="./js/data.js"></script>
+<!-- <div style="margin-top: 10px;">
+  <button onclick="loadSample('mẫu 1')">Tải mẫu 1</button>
+  <button onclick="loadSample('mẫu 2')">Tải mẫu 2</button>
+  <button onclick="loadSample('mẫu 3')">Tải mẫu 3</button>
+</div> -->
+
+</body>
+</html>

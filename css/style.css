@@ -1,0 +1,96 @@
+/* ==== Giao diện mặc định cho máy tính ==== */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f2f2f2;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+  text-align: center;
+}
+
+h1 {
+  color: #008080;
+  margin-bottom: 20px;
+}
+
+input#history {
+  width: 80%;
+  max-width: 500px;
+  padding: 10px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  outline: none;
+}
+
+input#history:focus {
+  border-color: #008080;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #008080;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #006666;
+}
+
+#result {
+  margin-top: 30px;
+  font-size: 18px;
+  line-height: 1.6;
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  display: inline-block;
+  max-width: 600px;
+}
+
+#sequenceStats {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #555;
+}
+
+/* ==== Responsive cho điện thoại nhỏ hơn 480px ==== */
+@media screen and (max-width: 480px) {
+  body {
+    padding: 10px;
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  input#history {
+    width: 100%;
+    font-size: 15px;
+    padding: 8px;
+  }
+
+  button {
+    width: 100%;
+    font-size: 15px;
+    padding: 10px;
+  }
+
+  #result {
+    font-size: 16px;
+    padding: 15px;
+    width: 100%;
+  }
+
+  #sequenceStats {
+    font-size: 15px;
+  }
+}
