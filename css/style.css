@@ -13,42 +13,53 @@ h1 {
   margin-bottom: 20px;
 }
 
-input#history {
-  width: 80%;
-  max-width: 500px;
-  padding: 10px;
+/* ==== Input và Button chung ==== */
+input[type="text"],
+input[type="number"],
+button {
   font-size: 16px;
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  padding: 12px;
+  height: 44px;
+  border: 1.2px solid #ccc;
+  border-radius: 6px;
   outline: none;
+  box-sizing: border-box;
+  text-align: center;
 }
 
-input#history:focus {
+input[type="text"]:focus,
+input[type="number"]:focus {
   border-color: #008080;
 }
 
+/* ==== Input lịch sử ==== */
+input#history {
+  width: 80%;
+  max-width: 600px;
+  margin-bottom: 20px;
+}
+
+/* ==== Button chính ==== */
 button {
-  padding: 10px 20px;
-  font-size: 16px;
   background-color: #008080;
   color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
   border: none;
   border-radius: 8px;
-  cursor: pointer;
   margin-top: 10px;
-  transition: background-color 0.3s;
 }
 
 button:hover {
   background-color: #006666;
 }
 
+/* ==== Kết quả dự đoán ==== */
 #result {
   margin-top: 30px;
   font-size: 18px;
   line-height: 1.6;
-  background-color: #ffffff;
+  background-color: #fff;
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
@@ -62,7 +73,32 @@ button:hover {
   color: #555;
 }
 
-/* ==== Responsive cho điện thoại nhỏ hơn 480px ==== */
+/* ==== Form nhập cược ==== */
+form#betForm {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 16px auto;
+  max-width: 600px;
+}
+
+form#betForm input,
+form#betForm button {
+  width: 110px;
+}
+
+/* ==== Ẩn mũi tên input number ==== */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* ==== Responsive cho điện thoại ==== */
 @media screen and (max-width: 480px) {
   body {
     padding: 10px;
@@ -72,16 +108,13 @@ button:hover {
     font-size: 20px;
   }
 
-  input#history {
-    width: 100%;
-    font-size: 15px;
-    padding: 8px;
-  }
-
+  input[type="text"],
+  input[type="number"],
   button {
     width: 100%;
     font-size: 15px;
     padding: 10px;
+    height: auto;
   }
 
   #result {
@@ -93,4 +126,20 @@ button:hover {
   #sequenceStats {
     font-size: 15px;
   }
+
+  form#betForm {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+.bet-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.bet-input-row input {
+  flex: 1;
+  text-align: center;
 }
