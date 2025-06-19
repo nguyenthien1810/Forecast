@@ -6,27 +6,167 @@
   <title>Forecast</title>
   <link rel="stylesheet" href="./css/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      text-align: center;
+      background-color: #f2f2f2;
+    }
+
+    h1 {
+      color: #008080;
+    }
+
+    input#history {
+      width: 80%;
+      max-width: 500px;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1.5px solid #ccc;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      font-size: 16px;
+      background-color: #008080;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    #chart,
+    #betChart {
+      margin-top: 20px;
+    }
+
+    /* ==== Phần nhập cược chia 2 cột ==== */
+    .bet-container {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .bet-form-box,
+    .bet-table-box {
+      flex: 1;
+      min-width: 280px;
+    }
+
+    form#betForm {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    form#betForm input,
+    form#betForm button {
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    table th,
+    table td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+    }
+
+    
+    @media screen and (max-width: 768px) {
+      .bet-container {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  </style>
 </head>
 <body>
+
   <h1>Tool Forecast result OU</h1>
   <input id="history" placeholder="Nhập lịch sử, ví dụ: o u u o" />
   <button onclick="analyze()">Phân tích</button>
   <div id="result"></div>
+  <div id="sequenceStats"></div>
 
-<div id="sequenceStats"></div>
-<label>
-  <input type="checkbox" id="toggleChart">
-  Hiện biểu đồ
-</label>
-<canvas id="chart" width="400" height="200" style="display: none;"></canvas>
+  <label>
+    <input type="checkbox" id="toggleChart">
+    Hiện biểu đồ
+  </label>
+  <canvas id="chart" width="400" height="200" style="display: none;"></canvas>
 
+  <hr>
+
+  <!-- ✅ Checkbox để bật/ẩn phần nhập -->
+  <label>
+    <input type="checkbox" id="toggleBetSection" onchange="toggleBetSection()">
+    Hiện phần nhập kết quả cược
+  </label>
+
+  <!-- ✅ Giao diện nhập cược chia 2 bên -->
+  <div id="betSection" style="display: none;">
+    <div class="bet-container">
+  <!-- BÊN TRÁI: Form nhập -->
+  <div class="bet-form-box">
+    <h2>Nhập kết quả</h2>
+    <form id="betForm" onsubmit="addBet(event)">
+      <div class="bet-input-row">
+        <input type="text" id="wl" placeholder="W / L" required>
+        <input type="text" id="amount" placeholder="Tiền lời/lỗ" required pattern="^-?\d+(\.\d{1,2})?$">
+      </div>
+      <button type="submit">Thêm</button>
+      <button id="clearAllBtn" onclick="clearAllBets()" type="button" style="display:none; margin-top: 10px; background-color: crimson; color: white;">Xóa</button>
+    </form>
+  </div>
+
+  <!-- BÊN PHẢI: Bảng kết quả -->
+  <div class="bet-table-box">
+    <table id="betTable">
+      <thead>
+        <tr>
+          <th>STT</th>
+          <th>Kết quả</th>
+          <th>Lời/Lỗ</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p id="summaryStats"></p>
+
+    <label>
+      <input type="checkbox" id="toggleBetChart" onchange="toggleBetChart()">
+      Hiện biểu đồ cược
+    </label>
+    <canvas id="betChart" width="400" height="200" style="display: none;"></canvas>
+  </div>
+</div>
+
+  <!-- SCRIPT -->
   <script src="./js/script.js"></script>
   <script src="./js/data.js"></script>
-<!-- <div style="margin-top: 10px;">
-  <button onclick="loadSample('mẫu 1')">Tải mẫu 1</button>
-  <button onclick="loadSample('mẫu 2')">Tải mẫu 2</button>
-  <button onclick="loadSample('mẫu 3')">Tải mẫu 3</button>
-</div> -->
 
+  <script>
+    function toggleBetSection() {
+      const checked = document.getElementById('toggleBetSection').checked;
+      document.getElementById('betSection').style.display = checked ? 'block' : 'none';
+    }
+  </script>
 </body>
 </html>
+
