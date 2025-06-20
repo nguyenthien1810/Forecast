@@ -40,7 +40,7 @@ function analyze() {
     const actualNext = arr.at(-1);
 
     const markov = getMarkovPrediction(testArr);
-    resultText += `<br>🤖 Markov đoán: ${markov.nextGuess} → thực tế: ${actualNext}`;
+    resultText += `<br>🤖 Markov đoán: ${markov.nextGuess} → đoán trước đó: ${actualNext}`;
     predictionLog.push({
       method: 'Markov',
       guess: markov.nextGuess,
