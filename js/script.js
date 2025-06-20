@@ -1,13 +1,12 @@
 let chartInstance = null;
 let betChart = null;
 let betData = [];
+let predictionLog = [];
 
-// 📊 Phân tích lịch sử O/U
 function analyze() {
   const input = document.getElementById('history').value.trim();
   const arr = input.split(/\s+/).map(x => x.toUpperCase());
   const counts = { O: 0, U: 0 };
-
   arr.forEach(x => {
     if (x === 'O' || x === 'U') counts[x]++;
   });
@@ -21,23 +20,60 @@ function analyze() {
   const lastOStreak = streaks.O.at(-1) || 0;
   const lastUStreak = streaks.U.at(-1) || 0;
 
-  let resultText = `🧮 O: ${oRate}%<br>🧮 U: ${uRate}%<br>${suggest}`;
+  let resultText = `🧮 O: ${oRate}% | 🧮 U: ${uRate}%<br>${suggest}`;
   resultText += `<br>🔁 Chuỗi O: ${streaks.O.join(', ')}<br>🔁 Chuỗi U: ${streaks.U.join(', ')}`;
 
-if (lastOStreak >= 6) {
-  resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastOStreak} O liên tiếp – xác suất đảo chiều cao!`;
-} else if (lastOStreak >= 4) {
-  resultText += `<br>⚠️ ${lastOStreak} O liên tiếp – có thể đảo sang U!`;
-}
+  if (lastOStreak >= 6) {
+    resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastOStreak} O liên tiếp – xác suất đảo chiều cao!`;
+  } else if (lastOStreak >= 4) {
+    resultText += `<br>⚠️ ${lastOStreak} O liên tiếp – có thể đảo sang U!`;
+  }
+  if (lastUStreak >= 6) {
+    resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastUStreak} U liên tiếp – xác suất đảo chiều cao!`;
+  } else if (lastUStreak >= 4) {
+    resultText += `<br>⚠️ ${lastUStreak} U liên tiếp – có thể đảo sang O!`;
+  }
 
-if (lastUStreak >= 6) {
-  resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastUStreak} U liên tiếp – xác suất đảo chiều cao!`;
-} else if (lastUStreak >= 4) {
-  resultText += `<br>⚠️ ${lastUStreak} U liên tiếp – có thể đảo sang O!`;
-}
+  // 🧠 Dự đoán nếu đủ dữ liệu
+  if (arr.length >= 4) {
+    const testArr = arr.slice(0, -1);
+    const actualNext = arr.at(-1);
 
-  const markov = getMarkovPrediction(arr);
-  resultText += `<br>🤖 Markov đoán tiếp theo: ${markov.nextGuess} (sau ${arr.at(-1)})`;
+    const markov = getMarkovPrediction(testArr);
+    resultText += `<br>🤖 Markov đoán: ${markov.nextGuess} → thực tế: ${actualNext}`;
+    predictionLog.push({
+      method: 'Markov',
+      guess: markov.nextGuess,
+      actual: actualNext,
+      correct: markov.nextGuess === actualNext
+    });
+
+    const pattern = suggestFromPattern(testArr, true);
+    resultText += `<br>${pattern.text}`;
+    if (pattern.guess === 'O' || pattern.guess === 'U') {
+      predictionLog.push({
+        method: 'Pattern',
+        guess: pattern.guess,
+        actual: actualNext,
+        correct: pattern.guess === actualNext
+      });
+    }
+
+    resultText += `<br>${showPredictionStats()}`;
+    resultText += `<br>${showAccuracyByMethod()}`;
+  } else {
+    resultText += `<br>❗ Không đủ dữ liệu để dự đoán Markov & Pattern (cần ≥ 4 lần cược)`;
+  }
+
+  // 🔍 Phân tích chuỗi đảo chiều
+  const reverseO = analyzeReverseStats(arr, 'O', 6);
+  const reverseU = analyzeReverseStats(arr, 'U', 6);
+  if (reverseO) {
+    resultText += `<br>📉 Sau chuỗi O ≥ 6: Đảo chiều ${reverseO.reversed}/${reverseO.total} lần (${reverseO.rate}%)`;
+  }
+  if (reverseU) {
+    resultText += `<br>📉 Sau chuỗi U ≥ 6: Đảo chiều ${reverseU.reversed}/${reverseU.total} lần (${reverseU.rate}%)`;
+  }
 
   document.getElementById('result').innerHTML = resultText;
 
@@ -46,7 +82,6 @@ if (lastUStreak >= 6) {
   if (showChart) drawChart(counts.O, counts.U);
 }
 
-// 🔁 Đếm chuỗi liên tiếp
 function countStreaks(arr) {
   const result = { O: [], U: [] };
   let current = arr[0], count = 1;
@@ -63,7 +98,6 @@ function countStreaks(arr) {
   return result;
 }
 
-// 📈 Vẽ biểu đồ O/U
 function drawChart(oCount, uCount) {
   const ctx = document.getElementById("chart").getContext("2d");
   if (chartInstance) chartInstance.destroy();
@@ -81,7 +115,6 @@ function drawChart(oCount, uCount) {
   });
 }
 
-// 🤖 Dự đoán Markov
 function getMarkovPrediction(arr) {
   const transitions = { O: { O: 0, U: 0 }, U: { O: 0, U: 0 } };
   for (let i = 0; i < arr.length - 1; i++) {
@@ -93,163 +126,77 @@ function getMarkovPrediction(arr) {
   return { nextGuess: guess, stats: transitions };
 }
 
-// ➕ Thêm dữ liệu cược
-function addBet(event) {
-  event.preventDefault();
-
-  const resultRaw = document.getElementById('wl').value.trim().toLowerCase();
-  const amountStr = document.getElementById('amount').value.trim();
-
-  if (!resultRaw || !amountStr) {
-    alert("Vui lòng nhập đầy đủ kết quả và tiền lời/lỗ");
-    return;
+function suggestFromPattern(arr, returnObject = false) {
+  const patterns = {};
+  for (let i = 0; i < arr.length - 3; i++) {
+    const key = arr.slice(i, i + 3).join('');
+    const next = arr[i + 3];
+    if (!patterns[key]) patterns[key] = { O: 0, U: 0 };
+    patterns[key][next]++;
   }
 
-  const amount = parseFloat(amountStr);
-  if (isNaN(amount)) {
-    alert("Tiền lời/lỗ phải là số hợp lệ");
-    return;
+  const last3 = arr.slice(-3).join('');
+  const data = patterns[last3];
+
+  if (data) {
+    const guess = data.O > data.U ? 'O' : 'U';
+    const total = data.O + data.U;
+    const confidence = ((Math.max(data.O, data.U) / total) * 100).toFixed(1);
+    const resultText = `📊 Pattern '${last3}' → đoán: ${guess} (độ tin cậy: ${confidence}%)`;
+    return returnObject ? { guess, confidence, text: resultText } : resultText;
   }
 
-  const winKeywords = ['w', 'win', 't', 'thắng', '1', '✓'];
-  const loseKeywords = ['l', 'lose', 'b', 'thua', '2', 'x', '✗'];
-
-  let result = '';
-  if (winKeywords.includes(resultRaw)) {
-    result = 'w';
-  } else if (loseKeywords.includes(resultRaw)) {
-    result = 'l';
-  } else {
-    alert("Kết quả chỉ được nhập dạng thắng/thua hợp lệ (vd: w, l, win, thua)");
-    return;
-  }
-
-  const adjustedAmount = result === 'l' ? -Math.abs(amount) : Math.abs(amount);
-  const matchId = betData.length + 1;
-
-  betData.push({ matchId, result, amount: adjustedAmount });
-  renderTable();
-  updateSummary();
-  document.getElementById('betForm').reset();
+  return returnObject
+    ? { guess: null, confidence: 0, text: '📊 Pattern: Không đủ dữ liệu để dự đoán.' }
+    : '📊 Pattern: Không đủ dữ liệu để dự đoán.';
 }
 
-// 🧾 Vẽ bảng cược
-function renderTable() {
-  const tbody = document.querySelector('#betTable tbody');
-  tbody.innerHTML = '';
-
-  betData.forEach((bet) => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${bet.matchId}</td>
-      <td>${bet.result}</td>
-      <td>${bet.amount > 0 ? '+' + bet.amount : bet.amount}</td>
-    `;
-    tbody.appendChild(row);
-  });
-
-  const clearBtn = document.getElementById('clearAllBtn');
-  clearBtn.style.display = betData.length > 0 ? 'inline-block' : 'none';
-}
-
-// 🧹 Xóa toàn bộ dữ liệu cược
-function clearAllBets() {
-  betData = [];
-  renderTable();
-  updateSummary();
-  document.getElementById('betForm').reset();
-  document.getElementById('clearAllBtn').style.display = 'none';
-}
-
-
-// 📊 Tổng hợp & vẽ biểu đồ cược
-function updateSummary() {
-  const total = betData.length;
-  const win = betData.filter(b => b.result === 'w').length;
-  const lose = total - win;
-  const winRate = total > 0 ? ((win / total) * 100).toFixed(2) : 0;
-  const totalProfit = betData.reduce((sum, b) => sum + b.amount, 0);
-
-  document.getElementById('summaryStats').innerText =
-    `Tổng trận: ${total} | Đúng: ${win} | Sai: ${lose} | Tỉ lệ đúng: ${winRate}% | Tổng lời/lỗ: ${totalProfit}`;
-
-  updateBetChart();
-}
-
-// 📈 Vẽ biểu đồ lời/lỗ
-function updateBetChart() {
-  const chartCanvas = document.getElementById('betChart');
-  const labels = betData.map((_, i) => `Trận ${i + 1}`);
-  
-  let cumulative = 0;
-  const cumulativeValues = betData.map(b => {
-    cumulative += b.amount;
-    return cumulative;
-  });
-
-  if (betChart) betChart.destroy();
-
-  betChart = new Chart(chartCanvas, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'Lũy kế lời/lỗ',
-        data: cumulativeValues,
-        borderColor: 'blue',
-        backgroundColor: 'rgba(0,0,255,0.1)',
-        fill: true,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: true }
-      },
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  });
-}
-
-
-// 🔘 Toggle biểu đồ
-function toggleBetChart() {
-  const chart = document.getElementById('betChart');
-  chart.style.display = chart.style.display === 'none' ? 'block' : 'none';
-}
-
-// 🔘 Toggle form cược
-function toggleBetSection() {
-  const checked = document.getElementById('toggleBetSection').checked;
-  document.getElementById('betSection').style.display = checked ? 'block' : 'none';
-}
-
-// Thêm hàng phân tích ngược 
-function analyzeReverseChance(arr, target = 'O', minStreak = 6) {
+function analyzeReverseStats(arr, target = 'O', minStreak = 6) {
+  let count = 0;
+  let reversed = 0;
   let streak = 0;
-  let total = 0;
-  let reverse = 0;
 
   for (let i = 0; i < arr.length - 1; i++) {
     if (arr[i] === target) {
       streak++;
     } else {
       if (streak >= minStreak) {
-        total++;
+        count++;
         if (arr[i + 1] && arr[i + 1] !== target) {
-          reverse++;
+          reversed++;
         }
       }
       streak = 0;
     }
   }
 
-  return total > 0 ? (reverse / total * 100).toFixed(2) : null;
+  return count > 0 ? {
+    total: count,
+    reversed: reversed,
+    rate: ((reversed / count) * 100).toFixed(2)
+  } : null;
 }
 
+function showPredictionStats() {
+  const total = predictionLog.length;
+  const correct = predictionLog.filter(p => p.correct).length;
+  const winRate = total > 0 ? ((correct / total) * 100).toFixed(2) : 0;
+  return `🧠 Hiệu quả dự đoán: ${correct}/${total} đúng (${winRate}%)`;
+}
 
+function showAccuracyByMethod() {
+  const methods = {};
+  predictionLog.forEach(p => {
+    if (!methods[p.method]) methods[p.method] = { total: 0, correct: 0 };
+    methods[p.method].total++;
+    if (p.correct) methods[p.method].correct++;
+  });
+
+  let result = '📈 Hiệu quả từng thuật toán:<br>';
+  for (const method in methods) {
+    const data = methods[method];
+    const rate = ((data.correct / data.total) * 100).toFixed(2);
+    result += `• ${method}: ${data.correct}/${data.total} đúng (${rate}%)<br>`;
+  }
+  return result;
+}
