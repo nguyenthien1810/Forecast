@@ -171,7 +171,12 @@ function updateSummary() {
 function updateBetChart() {
   const chartCanvas = document.getElementById('betChart');
   const labels = betData.map((_, i) => `Trận ${i + 1}`);
-  const values = betData.map(b => b.amount);
+  
+  let cumulative = 0;
+  const cumulativeValues = betData.map(b => {
+    cumulative += b.amount;
+    return cumulative;
+  });
 
   if (betChart) betChart.destroy();
 
@@ -180,21 +185,28 @@ function updateBetChart() {
     data: {
       labels: labels,
       datasets: [{
-        label: 'Lời/Lỗ',
-        data: values,
+        label: 'Lũy kế lời/lỗ',
+        data: cumulativeValues,
         borderColor: 'blue',
-        fill: false,
-        tension: 0.2
+        backgroundColor: 'rgba(0,0,255,0.1)',
+        fill: true,
+        tension: 0.3
       }]
     },
     options: {
       responsive: true,
       plugins: {
-        legend: { display: false }
+        legend: { display: true }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
       }
     }
   });
 }
+
 
 // 🔘 Toggle biểu đồ
 function toggleBetChart() {
