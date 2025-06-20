@@ -24,8 +24,17 @@ function analyze() {
   let resultText = `🧮 O: ${oRate}%<br>🧮 U: ${uRate}%<br>${suggest}`;
   resultText += `<br>🔁 Chuỗi O: ${streaks.O.join(', ')}<br>🔁 Chuỗi U: ${streaks.U.join(', ')}`;
 
-  if (lastOStreak >= 5) resultText += `<br>⚠️ ${lastOStreak} O liên tiếp – có thể đảo sang U!`;
-  if (lastUStreak >= 5) resultText += `<br>⚠️ ${lastUStreak} U liên tiếp – có thể đảo sang O!`;
+if (lastOStreak >= 6) {
+  resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastOStreak} O liên tiếp – xác suất đảo chiều cao!`;
+} else if (lastOStreak >= 4) {
+  resultText += `<br>⚠️ ${lastOStreak} O liên tiếp – có thể đảo sang U!`;
+}
+
+if (lastUStreak >= 6) {
+  resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastUStreak} U liên tiếp – xác suất đảo chiều cao!`;
+} else if (lastUStreak >= 4) {
+  resultText += `<br>⚠️ ${lastUStreak} U liên tiếp – có thể đảo sang O!`;
+}
 
   const markov = getMarkovPrediction(arr);
   resultText += `<br>🤖 Markov đoán tiếp theo: ${markov.nextGuess} (sau ${arr.at(-1)})`;
@@ -219,3 +228,28 @@ function toggleBetSection() {
   const checked = document.getElementById('toggleBetSection').checked;
   document.getElementById('betSection').style.display = checked ? 'block' : 'none';
 }
+
+// Thêm hàng phân tích ngược 
+function analyzeReverseChance(arr, target = 'O', minStreak = 6) {
+  let streak = 0;
+  let total = 0;
+  let reverse = 0;
+
+  for (let i = 0; i < arr.length - 1; i++) {
+    if (arr[i] === target) {
+      streak++;
+    } else {
+      if (streak >= minStreak) {
+        total++;
+        if (arr[i + 1] && arr[i + 1] !== target) {
+          reverse++;
+        }
+      }
+      streak = 0;
+    }
+  }
+
+  return total > 0 ? (reverse / total * 100).toFixed(2) : null;
+}
+
+
