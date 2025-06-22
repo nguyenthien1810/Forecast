@@ -72,7 +72,6 @@ form#betForm {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  float: left;
 }
 
 .bet-form-box h2 {
@@ -82,3 +81,12 @@ form#betForm {
   margin-left: 70px; /* ✅ Cách trái 20px */
 }
 
+/* Xóa dòng float lỗi */
+.bet-button-row button {
+  float: none; /* hoặc xoá hẳn dòng float: left; */
+}
+
+/* Giảm khoảng cách giữa input và button */
+.bet-input-row {
+  margin-bottom:  0px /* từ 10px xuống còn 4px hoặc 2px */
+}
