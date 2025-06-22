@@ -9,27 +9,34 @@ function analyze() {
     if (x === 'O' || x === 'U') counts[x]++;
   });
 
-  const total = arr.length || 1;
-  const oRate = ((counts.O / total) * 100).toFixed(2);
-  const uRate = ((counts.U / total) * 100).toFixed(2);
-  const suggest = oRate > uRate ? '🔮 Gợi ý: Đánh O' : '🔮 Gợi ý: Đánh U';
-
+  const isAdvanced = document.getElementById("showAdvanced").checked;
   const streaks = countStreaks(arr);
   const lastOStreak = streaks.O.at(-1) || 0;
   const lastUStreak = streaks.U.at(-1) || 0;
 
-  let resultText = `🧮 O: ${oRate}% | 🧮 U: ${uRate}%<br>${suggest}`;
-  resultText += `<br>🔁 Chuỗi O: ${streaks.O.join(', ')}<br>🔁 Chuỗi U: ${streaks.U.join(', ')}`;
+  let resultText = "";
 
-  if (lastOStreak >= 6) {
-    resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastOStreak} O liên tiếp – xác suất đảo chiều cao!`;
-  } else if (lastOStreak >= 4) {
-    resultText += `<br>⚠️ ${lastOStreak} O liên tiếp – có thể đảo sang U!`;
-  }
-  if (lastUStreak >= 6) {
-    resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastUStreak} U liên tiếp – xác suất đảo chiều cao!`;
-  } else if (lastUStreak >= 4) {
-    resultText += `<br>⚠️ ${lastUStreak} U liên tiếp – có thể đảo sang O!`;
+if (streaks.O.length > 0) {
+  resultText += streaks.O.length ? `🔁 Chuỗi O: ${streaks.O.join(', ')}` : '';
+}
+if (streaks.U.length > 0) {
+  resultText += resultText ? `<br>` : '';
+  resultText += `🔁 Chuỗi U: ${streaks.U.join(', ')}`;
+}
+
+
+  // Phần cảnh báo chuỗi dài (nâng cao)
+  if (isAdvanced) {
+    if (lastOStreak >= 6) {
+      resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastOStreak} O liên tiếp – xác suất đảo chiều cao!`;
+    } else if (lastOStreak >= 4) {
+      resultText += `<br>⚠️ ${lastOStreak} O liên tiếp – có thể đảo sang U!`;
+    }
+    if (lastUStreak >= 6) {
+      resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastUStreak} U liên tiếp – xác suất đảo chiều cao!`;
+    } else if (lastUStreak >= 4) {
+      resultText += `<br>⚠️ ${lastUStreak} U liên tiếp – có thể đảo sang O!`;
+    }
   }
 
   if (arr.length >= 4) {
@@ -46,8 +53,8 @@ function analyze() {
     });
 
     const pattern = suggestFromPattern(testArr, true);
-    resultText += `<br>${pattern.text}`;
     if (pattern.guess === 'O' || pattern.guess === 'U') {
+      resultText += `<br>${pattern.text}`;
       predictionLog.push({
         method: 'Pattern',
         guess: pattern.guess,
@@ -56,19 +63,23 @@ function analyze() {
       });
     }
 
-    resultText += `<br>${showPredictionStats()}`;
-    resultText += `<br>${showAccuracyByMethod()}`;
+    if (isAdvanced) {
+      resultText += `<br>${showPredictionStats()}`;
+      resultText += `<br>${showAccuracyByMethod()}`;
+    }
   } else {
     resultText += `<br>❗ Không đủ dữ liệu để dự đoán Markov & Pattern (cần ≥ 4 lần cược)`;
   }
 
-  const reverseO = analyzeReverseStats(arr, 'O', 6);
-  const reverseU = analyzeReverseStats(arr, 'U', 6);
-  if (reverseO) {
-    resultText += `<br>📉 Sau chuỗi O ≥ 6: Đảo chiều ${reverseO.reversed}/${reverseO.total} lần (${reverseO.rate}%)`;
-  }
-  if (reverseU) {
-    resultText += `<br>📉 Sau chuỗi U ≥ 6: Đảo chiều ${reverseU.reversed}/${reverseU.total} lần (${reverseU.rate}%)`;
+  if (isAdvanced) {
+    const reverseO = analyzeReverseStats(arr, 'O', 6);
+    const reverseU = analyzeReverseStats(arr, 'U', 6);
+    if (reverseO) {
+      resultText += `<br>📉 Sau chuỗi O ≥ 6: Đảo chiều ${reverseO.reversed}/${reverseO.total} lần (${reverseO.rate}%)`;
+    }
+    if (reverseU) {
+      resultText += `<br>📉 Sau chuỗi U ≥ 6: Đảo chiều ${reverseU.reversed}/${reverseU.total} lần (${reverseU.rate}%)`;
+    }
   }
 
   document.getElementById('result').innerHTML = resultText;
