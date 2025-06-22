@@ -67,6 +67,7 @@ if (total > 0) {
   summaryStats.textContent = `💰 Hòa vốn: 0`;
   summaryStats.style.color = ""; // màu mặc định
 }
+
   document.getElementById("winLossRatio").textContent = `📊 Tỷ lệ: W ${winRate}% - L ${lossRate}%`;
 
   document.getElementById("clearAllBtn").style.display = betData.length > 0 ? "inline-block" : "none";
