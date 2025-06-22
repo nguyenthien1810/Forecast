@@ -4,102 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Forecast</title>
-  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/tool.css">
+  <link rel="stylesheet" href="./css/resposive-all.css">
+  <link rel="stylesheet" href="./css/statistics-table.css">
+  <link rel="stylesheet" href="./css/form-bet.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      text-align: center;
-      background-color: #f2f2f2;
-    }
-
-    h1 {
-      color: #008080;
-    }
-
-    input#history {
-      width: 80%;
-      max-width: 500px;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1.5px solid #ccc;
-    }
-
-    button {
-      padding: 10px 20px;
-      margin-top: 10px;
-      font-size: 16px;
-      background-color: #008080;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    #chart,
-    #betChart {
-      margin-top: 20px;
-    }
-
-    /* ==== Phần nhập cược chia 2 cột ==== */
-    .bet-container {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      flex-wrap: wrap;
-      margin-top: 20px;
-      text-align: left;
-    }
-
-    .bet-form-box,
-    .bet-table-box {
-      flex: 1;
-      min-width: 280px;
-    }
-
-    form#betForm {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    form#betForm input,
-    form#betForm button {
-      padding: 8px 10px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      text-align: center;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-
-    table th,
-    table td {
-      border: 1px solid #ccc;
-      padding: 6px;
-      text-align: center;
-    }
-
-    
-    @media screen and (max-width: 768px) {
-      .bet-container {
-        flex-direction: column;
-        text-align: center;
-      }
-    }
-  </style>
 </head>
 <body>
 
   <h1>Tool Forecast result OU</h1>
+
+  <button class="toggle-btn" onclick="toggleDarkMode()">🌙</button>
+
   <input id="history" placeholder="Nhập lịch sử, ví dụ: o u u o" />
   <button onclick="analyze()">Phân tích</button>
   <div id="result"></div>
@@ -126,13 +43,19 @@
   <div class="bet-form-box">
     <h2>Nhập kết quả</h2>
     <form id="betForm" onsubmit="addBet(event)">
-      <div class="bet-input-row">
-        <input type="text" id="wl" placeholder="W / L" required>
-        <input type="text" id="amount" placeholder="Tiền lời/lỗ" required pattern="^-?\d+(\.\d{1,2})?$">
-      </div>
-      <button type="submit">Thêm</button>
-      <button id="clearAllBtn" onclick="clearAllBets()" type="button" style="display:none; margin-top: 10px; background-color: crimson; color: white;">Xóa</button>
-    </form>
+  <!-- Ô nhập W / L và Tiền lời/lỗ -->
+  <div class="bet-input-row">
+    <input type="text" id="wl" placeholder="W / L" required>
+    <input type="text" id="amount" placeholder="Tiền lời/lỗ" required pattern="^-?\d+(\.\d{1,2})?$">
+  </div>
+
+  <!-- Dòng riêng cho nút -->
+  <div class="bet-button-row">
+    <button type="submit">Thêm</button>
+    <button id="clearAllBtn" onclick="clearAllBets()" type="button" style="display:none; background-color: crimson; color: white;">Xóa</button>
+  </div>
+</form>
+
   </div>
 
   <!-- BÊN PHẢI: Bảng kết quả -->
@@ -169,6 +92,12 @@
       document.getElementById('betSection').style.display = checked ? 'block' : 'none';
     }
   </script>
+  <script>
+  function toggleDarkMode() {
+    document.body.classList.toggle("dark-mode");
+  }
+  </script>
+
 </body>
 </html>
 
