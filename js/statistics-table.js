@@ -56,7 +56,18 @@ function updateBetTable() {
   const winRate = totalBets > 0 ? ((winCount / totalBets) * 100).toFixed(1) : 0;
   const lossRate = totalBets > 0 ? ((lossCount / totalBets) * 100).toFixed(1) : 0;
 
-  document.getElementById("summaryStats").textContent = `💰 Tổng lời/lỗ: ${total}`;
+  const summaryStats = document.getElementById("summaryStats");
+if (total > 0) {
+  summaryStats.textContent = `💰 Tổng lời: ${total}`;
+  summaryStats.style.color = "#2ecc71"; // xanh lá
+} else if (total < 0) {
+  summaryStats.textContent = `💰 Tổng lỗ: ${total}`;
+  summaryStats.style.color = "#e74c3c"; // đỏ
+} else {
+  summaryStats.textContent = `💰 Hòa vốn: 0`;
+  summaryStats.style.color = ""; // màu mặc định
+}
+
   document.getElementById("winLossRatio").textContent = `📊 Tỷ lệ: W ${winRate}% - L ${lossRate}%`;
 
   document.getElementById("clearAllBtn").style.display = betData.length > 0 ? "inline-block" : "none";
