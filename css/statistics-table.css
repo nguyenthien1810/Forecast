@@ -1,0 +1,44 @@
+/* ==== Kết quả dự đoán ==== */
+#result {
+  margin-top: 30px;
+  font-size: 18px;
+  line-height: 1.6;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  display: inline-block;
+  max-width: 600px;
+}
+
+/* ==== Input lịch sử ==== */
+input#history {
+  width: 80%;
+  max-width: 600px;
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1.5px solid #ccc;
+  margin-bottom: 20px;
+}
+
+/* ==== Thống kê ==== */
+#sequenceStats {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #555;
+}
+
+/* ==== Bảng thống kê ==== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+table th,
+table td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+}

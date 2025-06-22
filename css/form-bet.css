@@ -1,0 +1,84 @@
+/* ==== Form nhập cược ==== */
+form#betForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 600px;
+  margin: 16px auto;
+}
+
+
+.bet-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.bet-input-row input {
+  flex: 1;
+  text-align: center;
+}
+
+/* ==== Chia cột nhập cược ==== */
+.bet-container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  text-align: left;
+}
+
+.bet-form-box,
+.bet-table-box {
+  flex: 1;
+  min-width: 280px;
+}
+
+.bet-button-row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start; /* ✅ căn trái thay vì center */
+  margin-top: 10px;
+}
+
+.bet-button-row button {
+  width: 110px;
+  padding: 8px 10px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* input */
+.bet-input-row input {
+  width: 112px;
+  height: 44px;
+  font-size: 16px;
+  padding: 0 10px;
+  border: 1.2px solid #ccc;
+  border-radius: 6px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* button */
+.bet-button-row button {
+  width: 110px;
+  height: 44px;
+  font-size: 16px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  float: left;
+}
+
+.bet-form-box h2 {
+  font-size: 25px;
+  margin-bottom: 6px;
+  text-align: left;
+  margin-left: 70px; /* ✅ Cách trái 20px */
+}
+
