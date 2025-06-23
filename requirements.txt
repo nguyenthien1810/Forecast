@@ -1,0 +1,4 @@
+# Thư viện python cần cài 
+flask
+scikit-learn
+joblib
