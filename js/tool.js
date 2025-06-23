@@ -24,7 +24,6 @@ function analyze() {
     resultText += `🔁 Chuỗi U: ${streaks.U.join(', ')}`;
   }
 
-  // ⚠️ Cảnh báo chuỗi dài (nâng cao)
   if (isAdvanced) {
     if (lastOStreak >= 6) resultText += `<br>🚨 Chuỗi ${lastOStreak} O – dễ đảo chiều!`;
     else if (lastOStreak >= 4) resultText += `<br>⚠️ ${lastOStreak} O – cân nhắc đảo sang U`;
@@ -37,7 +36,6 @@ function analyze() {
     const testArr = arr.slice(0, -1);
     const actualNext = arr.at(-1);
 
-    // ✅ Markov
     const markov = getMarkovPrediction(testArr);
     resultText += `<br>🤖 Markov đoán: ${markov.nextGuess} → đoán trước đó: ${actualNext}`;
     predictionLog.push({
@@ -47,7 +45,6 @@ function analyze() {
       correct: markov.nextGuess === actualNext
     });
 
-    // ✅ Pattern
     const patternResult = suggestFromPattern(testArr, true);
     if (patternResult.guess === 'O' || patternResult.guess === 'U') {
       resultText += `<br>${patternResult.text}`;
@@ -59,42 +56,12 @@ function analyze() {
       });
     }
 
-    // ✅ Random Forest
-    const recent = arr.slice(-5);
-    const goals = recent.filter(x => x === 'O').length;
-    const over5 = goals;
-
-    // Gửi API sau Markov & Pattern
-    fetch("http://127.0.0.1:5000/predict", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ goals, over_last5: over5 })
-    })
-      .then(res => res.json())
-      .then(data => {
-        resultText += `<br>🌳 Random Forest đoán: ${data.prediction}`;
-        predictionLog.push({
-          method: 'Random Forest',
-          guess: data.prediction,
-          actual: actualNext,
-          correct: data.prediction === actualNext
-        });
-
-        // Cập nhật kết quả
-        if (isAdvanced) {
-          resultText += `<br>${showPredictionStats()}`;
-          resultText += `<br>${showAccuracyByMethod()}`;
-        }
-        document.getElementById('result').innerHTML = resultText;
-      })
-      .catch(err => {
-        console.error("Lỗi gọi API:", err);
-        resultText += `<br>⚠️ Lỗi gọi API Random Forest`;
-        document.getElementById('result').innerHTML = resultText;
-      });
+    if (isAdvanced) {
+      resultText += `<br>${showPredictionStats()}`;
+      resultText += `<br>${showAccuracyByMethod()}`;
+    }
   } else {
     resultText += `<br>❗ Không đủ dữ liệu để dự đoán Markov & Pattern (cần ≥ 4 kết quả)`;
-    document.getElementById('result').innerHTML = resultText;
   }
 
   if (isAdvanced) {
@@ -108,14 +75,13 @@ function analyze() {
     }
   }
 
-  // Tạm thời gán kết quả trước khi fetch
   document.getElementById('result').innerHTML = resultText;
 
-  // Biểu đồ
   const showChart = document.getElementById("toggleChart").checked;
   document.getElementById("chart").style.display = showChart ? "block" : "none";
   if (showChart) drawChart(counts.O, counts.U);
 }
+
 
 
 function countStreaks(arr) {
