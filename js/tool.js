@@ -16,33 +16,28 @@ function analyze() {
 
   let resultText = "";
 
-if (streaks.O.length > 0) {
-  resultText += streaks.O.length ? `🔁 Chuỗi O: ${streaks.O.join(', ')}` : '';
-}
-if (streaks.U.length > 0) {
-  resultText += resultText ? `<br>` : '';
-  resultText += `🔁 Chuỗi U: ${streaks.U.join(', ')}`;
-}
+  if (streaks.O.length > 0) {
+    resultText += `🔁 Chuỗi O: ${streaks.O.join(', ')}`;
+  }
+  if (streaks.U.length > 0) {
+    resultText += resultText ? `<br>` : '';
+    resultText += `🔁 Chuỗi U: ${streaks.U.join(', ')}`;
+  }
 
-
-  // Phần cảnh báo chuỗi dài (nâng cao)
+  // ⚠️ Cảnh báo chuỗi dài (nâng cao)
   if (isAdvanced) {
-    if (lastOStreak >= 6) {
-      resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastOStreak} O liên tiếp – xác suất đảo chiều cao!`;
-    } else if (lastOStreak >= 4) {
-      resultText += `<br>⚠️ ${lastOStreak} O liên tiếp – có thể đảo sang U!`;
-    }
-    if (lastUStreak >= 6) {
-      resultText += `<br>🚨 Cảnh báo: Đã có chuỗi ${lastUStreak} U liên tiếp – xác suất đảo chiều cao!`;
-    } else if (lastUStreak >= 4) {
-      resultText += `<br>⚠️ ${lastUStreak} U liên tiếp – có thể đảo sang O!`;
-    }
+    if (lastOStreak >= 6) resultText += `<br>🚨 Chuỗi ${lastOStreak} O – dễ đảo chiều!`;
+    else if (lastOStreak >= 4) resultText += `<br>⚠️ ${lastOStreak} O – cân nhắc đảo sang U`;
+
+    if (lastUStreak >= 6) resultText += `<br>🚨 Chuỗi ${lastUStreak} U – dễ đảo chiều!`;
+    else if (lastUStreak >= 4) resultText += `<br>⚠️ ${lastUStreak} U – cân nhắc đảo sang O`;
   }
 
   if (arr.length >= 4) {
     const testArr = arr.slice(0, -1);
     const actualNext = arr.at(-1);
 
+    // ✅ Markov
     const markov = getMarkovPrediction(testArr);
     resultText += `<br>🤖 Markov đoán: ${markov.nextGuess} → đoán trước đó: ${actualNext}`;
     predictionLog.push({
@@ -52,42 +47,76 @@ if (streaks.U.length > 0) {
       correct: markov.nextGuess === actualNext
     });
 
-    const pattern = suggestFromPattern(testArr, true);
-    if (pattern.guess === 'O' || pattern.guess === 'U') {
-      resultText += `<br>${pattern.text}`;
+    // ✅ Pattern
+    const patternResult = suggestFromPattern(testArr, true);
+    if (patternResult.guess === 'O' || patternResult.guess === 'U') {
+      resultText += `<br>${patternResult.text}`;
       predictionLog.push({
         method: 'Pattern',
-        guess: pattern.guess,
+        guess: patternResult.guess,
         actual: actualNext,
-        correct: pattern.guess === actualNext
+        correct: patternResult.guess === actualNext
       });
     }
 
-    if (isAdvanced) {
-      resultText += `<br>${showPredictionStats()}`;
-      resultText += `<br>${showAccuracyByMethod()}`;
-    }
+    // ✅ Random Forest
+    const recent = arr.slice(-5);
+    const goals = recent.filter(x => x === 'O').length;
+    const over5 = goals;
+
+    // Gửi API sau Markov & Pattern
+    fetch("http://127.0.0.1:5000/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ goals, over_last5: over5 })
+    })
+      .then(res => res.json())
+      .then(data => {
+        resultText += `<br>🌳 Random Forest đoán: ${data.prediction}`;
+        predictionLog.push({
+          method: 'Random Forest',
+          guess: data.prediction,
+          actual: actualNext,
+          correct: data.prediction === actualNext
+        });
+
+        // Cập nhật kết quả
+        if (isAdvanced) {
+          resultText += `<br>${showPredictionStats()}`;
+          resultText += `<br>${showAccuracyByMethod()}`;
+        }
+        document.getElementById('result').innerHTML = resultText;
+      })
+      .catch(err => {
+        console.error("Lỗi gọi API:", err);
+        resultText += `<br>⚠️ Lỗi gọi API Random Forest`;
+        document.getElementById('result').innerHTML = resultText;
+      });
   } else {
-    resultText += `<br>❗ Không đủ dữ liệu để dự đoán Markov & Pattern (cần ≥ 4 lần cược)`;
+    resultText += `<br>❗ Không đủ dữ liệu để dự đoán Markov & Pattern (cần ≥ 4 kết quả)`;
+    document.getElementById('result').innerHTML = resultText;
   }
 
   if (isAdvanced) {
     const reverseO = analyzeReverseStats(arr, 'O', 6);
     const reverseU = analyzeReverseStats(arr, 'U', 6);
     if (reverseO) {
-      resultText += `<br>📉 Sau chuỗi O ≥ 6: Đảo chiều ${reverseO.reversed}/${reverseO.total} lần (${reverseO.rate}%)`;
+      resultText += `<br>📉 Sau O ≥ 6: Đảo ${reverseO.reversed}/${reverseO.total} (${reverseO.rate}%)`;
     }
     if (reverseU) {
-      resultText += `<br>📉 Sau chuỗi U ≥ 6: Đảo chiều ${reverseU.reversed}/${reverseU.total} lần (${reverseU.rate}%)`;
+      resultText += `<br>📉 Sau U ≥ 6: Đảo ${reverseU.reversed}/${reverseU.total} (${reverseU.rate}%)`;
     }
   }
 
+  // Tạm thời gán kết quả trước khi fetch
   document.getElementById('result').innerHTML = resultText;
 
+  // Biểu đồ
   const showChart = document.getElementById("toggleChart").checked;
   document.getElementById("chart").style.display = showChart ? "block" : "none";
   if (showChart) drawChart(counts.O, counts.U);
 }
+
 
 function countStreaks(arr) {
   const result = { O: [], U: [] };
