@@ -218,7 +218,7 @@ function showPredictionStats() {
 // hàm hiển thị bảng thống kê thuật toán - khi chọn hiện nâng cao
 function showAccuracyByMethod() {
   const methods = {};
-  const symbols = { true: 'đ', false: 's' };
+  const symbols = { true: '✔️', false: '❌' };
 
   // ✅ Lọc predictionLog để chỉ lấy từ ván thứ 10 trở đi
   const filteredLog = predictionLog.slice(9); // ván thứ 10 trở đi (index 9)
