@@ -37,114 +37,74 @@ function analyze() {
     else if (lastUStreak >= 4) resultText += `<br>⚠️ ${lastUStreak} U – cân nhắc đảo sang O`;
   }
 
-  if (arr.length >= 4) {
-    const testArr = arr.slice(0, -1);
-    const actualNext = arr.at(-1);
+  if (arr.length >= 5) {
+  predictionLog = []; // Xóa log cũ
 
-    // ✅ Markov
-    const markov = getMarkovPrediction(testArr);
-    resultText += `<br>🤖 Markov đoán: ${markov.nextGuess}`;
+  for (let i = 4; i < arr.length; i++) {
+    const history = arr.slice(0, i);  // từ đầu đến ván trước
+    const actual = arr[i];            // ván hiện tại là kết quả thật
+
+    // Markov
+    const markov = getMarkovPrediction(history);
     predictionLog.push({
       method: 'Markov',
       guess: markov.nextGuess,
-      actual: actualNext,
-      correct: markov.nextGuess === actualNext
+      actual,
+      correct: markov.nextGuess === actual,
+      index: i
     });
 
-    // ✅ Bayes
-    const bayes = getNaiveBayesPrediction(testArr, 2);
-  if (typeof bayes === 'string') {
-    resultText += `<br>${bayes}`;
-  } else {
-    resultText += `<br>${bayes.text}`;
-    predictionLog.push({
-      method: 'Bayes',
-      guess: bayes.guess,
-      actual: actualNext,
-      correct: bayes.correct
-    });
-  }
-
-    // ✅ Pattern
-    const patternResult = suggestFromPattern(testArr, true);
-    if (patternResult.guess === 'O' || patternResult.guess === 'U') {
-      resultText += `<br>${patternResult.text}`;
+    // Bayes
+    const bayes = getNaiveBayesPrediction(history, 2, actual);
+    if (typeof bayes !== 'string') {
       predictionLog.push({
-        method: 'Pattern',
-        guess: patternResult.guess,
-        actual: actualNext,
-        correct: patternResult.guess === actualNext
+        method: 'Bayes',
+        guess: bayes.guess,
+        actual,
+        correct: bayes.correct,
+        index: i
       });
     }
 
-    // ❌ Ẩn Random Forest & Reinforcement Learning bằng comment
-    /*
-    if (isAdvanced) {
-      const recent = arr.slice(-5);
-      const goals = recent.filter(x => x === 'O').length;
-      const API_BASE = "http://127.0.0.1:5000";
-
-      fetch(`${API_BASE}/predict`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ goals, over_last5: goals })
-      })
-        .then(res => {
-          if (!res.ok) throw new Error("RF API error");
-          return res.json();
-        })
-        .then(data => {
-          resultText += `<br>🌳 Random Forest đoán: ${data.prediction}`;
-          const confidence = (data.confidence ?? 0.5);
-          resultText += ` (${(confidence * 100).toFixed(1)}%)`;
-          predictionLog.push({
-            method: 'Random Forest',
-            guess: data.prediction,
-            actual: actualNext,
-            correct: data.prediction === actualNext
-          });
-
-          return getRLPrediction(historyTo01(arr));
-        })
-        .then(rlResult => {
-          resultText += rlResult;
-          resultText += `<br>${showPredictionStats()}`;
-          resultText += `<br>${showAccuracyByMethod()}`;
-          document.getElementById('result').innerHTML = resultText;
-        })
-        .catch(err => {
-          console.error("Lỗi API:", err);
-          resultText += `<br>⚠️ Lỗi gọi API Random Forest hoặc Reinforcement Learning`;
-          document.getElementById('result').innerHTML = resultText;
-        });
-    } else {
-      document.getElementById('result').innerHTML = resultText;
+    // Pattern
+    const patternResult = suggestFromPattern(history, true);
+    if (patternResult.guess === 'O' || patternResult.guess === 'U') {
+      predictionLog.push({
+        method: 'Pattern',
+        guess: patternResult.guess,
+        actual,
+        correct: patternResult.guess === actual,
+        index: i
+      });
     }
-    */
-
-    // ✅ Nếu không dùng RF/RL, vẫn hiển thị kết quả luôn
-    if (isAdvanced) {
-      resultText += `<br>${showPredictionStats()}`;
-      resultText += `<br>${showAccuracyByMethod()}`;
-    }
-    document.getElementById('result').innerHTML = resultText;
-
-  } else {
-    resultText += `<br>❗ Không đủ dữ liệu để dự đoán Markov & Pattern (cần ≥ 4 kết quả)`;
-    document.getElementById('result').innerHTML = resultText;
   }
 
-  // 📉 Thống kê đảo chiều chuỗi dài
+  // ➕ Optional: Dự đoán thêm ván kế tiếp (ván chưa có thực tế)
+  const future = getMarkovPrediction(arr);
+  resultText += `<br>🤖 Markov đoán tiếp theo: ${future.nextGuess}`;
+
+  const bayesFuture = getNaiveBayesPrediction(arr, 2);
+  if (typeof bayesFuture !== 'string') {
+    resultText += `<br>${bayesFuture.text}`;
+  }
+
+  const patternFuture = suggestFromPattern(arr, true);
+  if (patternFuture.guess) {
+    resultText += `<br>${patternFuture.text}`;
+  }
+
+  // Hiện thống kê nếu bật nâng cao
   if (isAdvanced) {
-    const reverseO = analyzeReverseStats(arr, 'O', 6);
-    const reverseU = analyzeReverseStats(arr, 'U', 6);
-    if (reverseO) {
-      resultText += `<br>📉 Sau O ≥ 6: Đảo ${reverseO.reversed}/${reverseO.total} (${reverseO.rate}%)`;
-    }
-    if (reverseU) {
-      resultText += `<br>📉 Sau U ≥ 6: Đảo ${reverseU.reversed}/${reverseU.total} (${reverseU.rate}%)`;
-    }
+    resultText += `<br>${showPredictionStats()}`;
+    resultText += `<br>${showAccuracyByMethod()}`;
   }
+
+  document.getElementById('result').innerHTML = resultText;
+} else {
+  resultText += `<br>❗ Không đủ dữ liệu để phân tích (cần ≥ 5 kết quả)`;
+  document.getElementById('result').innerHTML = resultText;
+}
+
 
   // Biểu đồ
   const showChart = document.getElementById("toggleChart").checked;
@@ -255,20 +215,53 @@ function showPredictionStats() {
   return `📌 Hiệu quả dự đoán: ${correct}/${total} đúng (${winRate}%)`;
 }
 
+// hàm hiển thị bảng thống kê thuật toán - khi chọn hiện nâng cao
 function showAccuracyByMethod() {
   const methods = {};
-  predictionLog.forEach(p => {
-    if (!methods[p.method]) methods[p.method] = { total: 0, correct: 0 };
+  const symbols = { true: 'đ', false: 's' };
+
+  // ✅ Lọc predictionLog để chỉ lấy từ ván thứ 10 trở đi
+  const filteredLog = predictionLog.slice(9); // ván thứ 10 trở đi (index 9)
+
+  filteredLog.forEach(p => {
+    if (!methods[p.method]) {
+      methods[p.method] = {
+        total: 0,
+        correct: 0,
+        chain: []
+      };
+    }
+    const isCorrect = p.correct;
     methods[p.method].total++;
-    if (p.correct) methods[p.method].correct++;
+    if (isCorrect) methods[p.method].correct++;
+    methods[p.method].chain.push(symbols[isCorrect]);
   });
 
-  let result = '📈 Hiệu quả từng thuật toán:<br>';
-  for (const method in methods) {
-    const data = methods[method];
-    const rate = ((data.correct / data.total) * 100).toFixed(2);
-    result += `• ${method}: ${data.correct}/${data.total} đúng (${rate}%)<br>`;
+  let result = `<table border="1" cellpadding="4" style="border-collapse: collapse; margin-top: 10px;">`;
+  result += `<thead><tr>
+    <th>Thuật toán</th>
+    <th>Đúng</th>
+    <th>Tổng</th>
+    <th>Tỉ lệ đúng</th>
+    <th>Chuỗi đúng/sai (từ ván 10)</th>
+  </tr></thead><tbody>`;
+
+  const desiredOrder = ['Markov', 'Bayes', 'Pattern'];
+desiredOrder.forEach(method => {
+  if (methods[method]) {
+    const { total, correct, chain } = methods[method];
+    const rate = ((correct / total) * 100).toFixed(1);
+    result += `<tr>
+      <td>${method}</td>
+      <td>${correct}</td>
+      <td>${total}</td>
+      <td>${rate}%</td>
+      <td>${chain.join(' ')}</td>
+    </tr>`;
   }
+});
+
+  result += `</tbody></table>`;
   return result;
 }
 
@@ -301,7 +294,7 @@ function getRLPrediction(historyArray) {
 }
 
 // Hàm NaiveBayes
-function getNaiveBayesPrediction(arr, lookback = 2) {
+function getNaiveBayesPrediction(arr, lookback = 2, actual = null) {
   if (arr.length < lookback + 1) return "❗ Không đủ dữ liệu cho Bayes";
 
   const contextCounts = {};
@@ -324,7 +317,8 @@ function getNaiveBayesPrediction(arr, lookback = 2) {
   return {
     guess,
     text: `🧮 Bayes '${latestContext}' → O: ${(pO * 100).toFixed(1)}%, U: ${(pU * 100).toFixed(1)}% → đoán: ${guess}`,
-    correct: arr.at(-1) === guess
+    correct: actual ? (actual === guess) : null
   };
 }
+
 
