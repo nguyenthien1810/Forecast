@@ -19,7 +19,15 @@
 
   <input id="history" placeholder="Nhập lịch sử, ví dụ: o u u o" />
   <button onclick="analyze()">Phân tích</button>
-  <div id="result"></div>
+  <div id="result">
+  <!-- Dòng hiện có Markov, Pattern, Random Forest -->
+  <div id="forecast-basic"></div>
+  <div id="forecast-randomforest"></div>
+
+  <!-- ✅ Dòng mới cho Reinforcement Learning -->
+  <div id="forecast-rl"></div>
+</div>
+
   <div id="sequenceStats"></div>
 
   <label>
