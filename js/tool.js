@@ -1,6 +1,10 @@
 let chartInstance = null;
 let predictionLog = [];
 
+function historyTo01(arr) {
+  return arr.map(x => x === 'O' ? 1 : 0);
+}
+
 function analyze() {
   const input = document.getElementById('history').value.trim();
   const arr = input.split(/\s+/).map(x => x.toUpperCase());
@@ -24,6 +28,7 @@ function analyze() {
     resultText += `🔁 Chuỗi U: ${streaks.U.join(', ')}`;
   }
 
+  // ⚠️ Cảnh báo chuỗi dài
   if (isAdvanced) {
     if (lastOStreak >= 6) resultText += `<br>🚨 Chuỗi ${lastOStreak} O – dễ đảo chiều!`;
     else if (lastOStreak >= 4) resultText += `<br>⚠️ ${lastOStreak} O – cân nhắc đảo sang U`;
@@ -36,8 +41,9 @@ function analyze() {
     const testArr = arr.slice(0, -1);
     const actualNext = arr.at(-1);
 
+    // ✅ Markov
     const markov = getMarkovPrediction(testArr);
-    resultText += `<br>🤖 Markov đoán: ${markov.nextGuess} → đoán trước đó: ${actualNext}`;
+    resultText += `<br>🤖 Markov đoán: ${markov.nextGuess}`;
     predictionLog.push({
       method: 'Markov',
       guess: markov.nextGuess,
@@ -45,6 +51,21 @@ function analyze() {
       correct: markov.nextGuess === actualNext
     });
 
+    // ✅ Bayes
+    const bayes = getNaiveBayesPrediction(testArr, 2);
+  if (typeof bayes === 'string') {
+    resultText += `<br>${bayes}`;
+  } else {
+    resultText += `<br>${bayes.text}`;
+    predictionLog.push({
+      method: 'Bayes',
+      guess: bayes.guess,
+      actual: actualNext,
+      correct: bayes.correct
+    });
+  }
+
+    // ✅ Pattern
     const patternResult = suggestFromPattern(testArr, true);
     if (patternResult.guess === 'O' || patternResult.guess === 'U') {
       resultText += `<br>${patternResult.text}`;
@@ -56,14 +77,64 @@ function analyze() {
       });
     }
 
+    // ❌ Ẩn Random Forest & Reinforcement Learning bằng comment
+    /*
+    if (isAdvanced) {
+      const recent = arr.slice(-5);
+      const goals = recent.filter(x => x === 'O').length;
+      const API_BASE = "http://127.0.0.1:5000";
+
+      fetch(`${API_BASE}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goals, over_last5: goals })
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("RF API error");
+          return res.json();
+        })
+        .then(data => {
+          resultText += `<br>🌳 Random Forest đoán: ${data.prediction}`;
+          const confidence = (data.confidence ?? 0.5);
+          resultText += ` (${(confidence * 100).toFixed(1)}%)`;
+          predictionLog.push({
+            method: 'Random Forest',
+            guess: data.prediction,
+            actual: actualNext,
+            correct: data.prediction === actualNext
+          });
+
+          return getRLPrediction(historyTo01(arr));
+        })
+        .then(rlResult => {
+          resultText += rlResult;
+          resultText += `<br>${showPredictionStats()}`;
+          resultText += `<br>${showAccuracyByMethod()}`;
+          document.getElementById('result').innerHTML = resultText;
+        })
+        .catch(err => {
+          console.error("Lỗi API:", err);
+          resultText += `<br>⚠️ Lỗi gọi API Random Forest hoặc Reinforcement Learning`;
+          document.getElementById('result').innerHTML = resultText;
+        });
+    } else {
+      document.getElementById('result').innerHTML = resultText;
+    }
+    */
+
+    // ✅ Nếu không dùng RF/RL, vẫn hiển thị kết quả luôn
     if (isAdvanced) {
       resultText += `<br>${showPredictionStats()}`;
       resultText += `<br>${showAccuracyByMethod()}`;
     }
+    document.getElementById('result').innerHTML = resultText;
+
   } else {
     resultText += `<br>❗ Không đủ dữ liệu để dự đoán Markov & Pattern (cần ≥ 4 kết quả)`;
+    document.getElementById('result').innerHTML = resultText;
   }
 
+  // 📉 Thống kê đảo chiều chuỗi dài
   if (isAdvanced) {
     const reverseO = analyzeReverseStats(arr, 'O', 6);
     const reverseU = analyzeReverseStats(arr, 'U', 6);
@@ -75,14 +146,11 @@ function analyze() {
     }
   }
 
-  document.getElementById('result').innerHTML = resultText;
-
+  // Biểu đồ
   const showChart = document.getElementById("toggleChart").checked;
   document.getElementById("chart").style.display = showChart ? "block" : "none";
   if (showChart) drawChart(counts.O, counts.U);
 }
-
-
 
 function countStreaks(arr) {
   const result = { O: [], U: [] };
@@ -117,6 +185,7 @@ function drawChart(oCount, uCount) {
   });
 }
 
+// hàm markov
 function getMarkovPrediction(arr) {
   const transitions = { O: { O: 0, U: 0 }, U: { O: 0, U: 0 } };
   for (let i = 0; i < arr.length - 1; i++) {
@@ -144,7 +213,7 @@ function suggestFromPattern(arr, returnObject = false) {
     const guess = data.O > data.U ? 'O' : 'U';
     const total = data.O + data.U;
     const confidence = ((Math.max(data.O, data.U) / total) * 100).toFixed(1);
-    const resultText = `📊 Pattern '${last3}' → đoán: ${guess} (độ tin cậy: ${confidence}%)`;
+    const resultText = `📊 Pattern '${last3}' → đoán: ${guess}`;
     return returnObject ? { guess, confidence, text: resultText } : resultText;
   }
 
@@ -183,7 +252,7 @@ function showPredictionStats() {
   const total = predictionLog.length;
   const correct = predictionLog.filter(p => p.correct).length;
   const winRate = total > 0 ? ((correct / total) * 100).toFixed(2) : 0;
-  return `🧠 Hiệu quả dự đoán: ${correct}/${total} đúng (${winRate}%)`;
+  return `📌 Hiệu quả dự đoán: ${correct}/${total} đúng (${winRate}%)`;
 }
 
 function showAccuracyByMethod() {
@@ -202,3 +271,60 @@ function showAccuracyByMethod() {
   }
   return result;
 }
+
+// hàm RL
+function getRLPrediction(historyArray) {
+  return fetch('http://127.0.0.1:5000/api/predict-rl', {  // 👈 sửa absolute URL
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ history: historyArray })
+  })
+    .then(response => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json();
+    })
+    .then(data => {
+  const actual = document.getElementById('history').value.trim().toUpperCase().split(/\s+/).at(-1);
+  predictionLog.push({
+    method: 'Reinforcement Learning',
+    guess: data.prediction,
+    actual,
+    correct: data.prediction === actual
+  });
+
+  return `<br>🧠 Reinforcement Learning đoán: ${data.prediction}`;
+})
+    .catch(error => {
+      console.error("Lỗi khi gọi RL API:", error);
+      return `<br>⚠️ Lỗi gọi API Reinforcement Learning`;
+    });
+}
+
+// Hàm NaiveBayes
+function getNaiveBayesPrediction(arr, lookback = 2) {
+  if (arr.length < lookback + 1) return "❗ Không đủ dữ liệu cho Bayes";
+
+  const contextCounts = {};
+  for (let i = 0; i <= arr.length - lookback - 1; i++) {
+    const context = arr.slice(i, i + lookback).join('');
+    const outcome = arr[i + lookback];
+    if (!contextCounts[context]) contextCounts[context] = { O: 0, U: 0 };
+    contextCounts[context][outcome]++;
+  }
+
+  const latestContext = arr.slice(-lookback).join('');
+  const counts = contextCounts[latestContext];
+  if (!counts) return `🧮 Bayes: Không có dữ liệu cho chuỗi '${latestContext}'`;
+
+  const total = counts.O + counts.U;
+  const pO = (counts.O / total).toFixed(2);
+  const pU = (counts.U / total).toFixed(2);
+  const guess = counts.O > counts.U ? 'O' : 'U';
+
+  return {
+    guess,
+    text: `🧮 Bayes '${latestContext}' → O: ${(pO * 100).toFixed(1)}%, U: ${(pU * 100).toFixed(1)}% → đoán: ${guess}`,
+    correct: arr.at(-1) === guess
+  };
+}
+
